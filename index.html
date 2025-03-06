@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QRCode para Código de Barras</title>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
+    <script src="https://unpkg.com/jsqr/dist/jsQR.js"></script>
+    <style>
+        /* Cores principais */
+        :root {
+            --cor-laranja: #ff7f00;
+            --cor-cinza-claro: #f4f4f4;
+            --cor-cinza-escuro: #333;
+            --cor-branco: #fff;
+            --cor-preto: #000;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--cor-cinza-claro);
+        }
+
+        /* Barra de navegação */
+        nav {
+            background-color: var(--cor-laranja);
+            padding: 15px 20px;
+            color: var(--cor-branco);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        /* Cabeçalho */
+        .header {
+            background-color: var(--cor-laranja);
+            color: var(--cor-branco);
+            padding: 50px 20px;
+            text-align: center;
+        }
+
+        .header h2 {
+            font-size: 36px;
+            margin: 0;
+        }
+
+        /* Container principal */
+        .container {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Cards de informações */
+        .info-card {
+            background-color: var(--cor-branco);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .info-card h3 {
+            font-size: 24px;
+            color: var(--cor-laranja);
+            margin-bottom: 10px;
+        }
+
+        .info-card p {
+            font-size: 18px;
+            color: var(--cor-cinza-escuro);
+        }
+
+        /* Input e botão */
+        label {
+            font-size: 18px;
+            margin-right: 10px;
+        }
+
+        input[type="file"] {
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: var(--cor-laranja);
+            color: var(--cor-branco);
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #e67300;
+        }
+
+        /* Gráfico */
+        .graph {
+            background-color: var(--cor-branco);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 300px;
+        }
+
+        /* Rodapé */
+        footer {
+            background-color: var(--cor-laranja);
+            color: var(--cor-branco);
+            text-align: center;
+            padding: 10px;
+            position: absolute;
+            width: 100%;
+            bottom: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Barra de navegação -->
+    <nav>
+        <h1>QRCode para Código de Barras</h1>
+    </nav>
+
+    <!-- Cabeçalho -->
+    <header class="header">
+        <h2>Conversor de QR Code para Código de Barras</h2>
+        <p>Carregue uma imagem de QR Code para transformá-la em um código de barras.</p>
+    </header>
+
+    <!-- Container Principal -->
+    <div class="container">
+
+        <!-- Informações -->
+        <div class="info-card">
+            <h3>Selecione a Imagem do QR Code</h3>
+            <label for="qrcodeImage">Imagem:</label>
+            <input type="file" id="qrcodeImage" accept="image/*" onchange="readQRCode()">
+        </div>
+
+        <!-- Texto do QR Code -->
+        <div class="info-card">
+            <h3>Texto do QR Code:</h3>
+            <p id="qrText">Nenhum QR Code lido ainda.</p>
+        </div>
+
+        <!-- Código de Barras -->
+        <div class="info-card">
+            <h3>Transformar em Código de Barras:</h3>
+            <svg id="barcode"></svg>
+        </div>
+
+        <!-- Gráfico (opcional) -->
+        <div class="graph">
+            <p>Área para gráficos (exemplo de gráfico aqui)</p>
+        </div>
+
+    </div>
+
+    <!-- Rodapé -->
+    <footer>
+        <p>&copy; 2025 Desenvolvido por Natanael Carvalho</p>
+    </footer>
+
+    <script>
+        function readQRCode() {
+            const fileInput = document.getElementById('qrcodeImage');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert("Por favor, selecione uma imagem.");
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    context.drawImage(img, 0, 0);
+                    
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    const qrCode = jsQR(imageData.data, canvas.width, canvas.height);
+                    
+                    if (qrCode) {
+                        document.getElementById('qrText').innerText = qrCode.data;
+                        generateBarcode(qrCode.data);
+                    } else {
+                        alert("Não foi possível ler o QR Code.");
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function generateBarcode(text) {
+            const barcodeContainer = document.getElementById('barcode');
+            JsBarcode(barcodeContainer, text, {
+                format: "CODE128",
+                lineColor: "#000",  /* Código de barras agora é preto */
+                width: 2,
+                height: 100,
+                displayValue: true
+            });
+        }
+    </script>
+</body>
+</html>
