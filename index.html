@@ -22,6 +22,9 @@
             margin: 0;
             padding: 0;
             background-color: var(--cor-cinza-claro);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         /* Barra de navegação */
@@ -52,14 +55,15 @@
             margin: 0;
         }
 
-        /* Container principal */
+        /* Container Principal */
         .container {
             padding: 20px;
             display: grid;
             grid-template-columns: 1fr;
             gap: 20px;
-            max-width: 1200px;
+            max-width: 800px;
             margin: 0 auto;
+            flex-grow: 1;
         }
 
         /* Cards de informações */
@@ -91,6 +95,9 @@
         input[type="file"] {
             padding: 10px;
             font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 20px;
         }
 
         button {
@@ -101,23 +108,18 @@
             font-size: 16px;
             cursor: pointer;
             border-radius: 5px;
-            margin-top: 10px;
         }
 
         button:hover {
             background-color: #e67300;
         }
 
-        /* Gráfico */
-        .graph {
-            background-color: var(--cor-branco);
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 300px;
+        /* Feedback de carregamento */
+        .loading {
+            display: none;
+            font-size: 18px;
+            color: var(--cor-laranja);
+            margin-top: 20px;
         }
 
         /* Rodapé */
@@ -126,9 +128,6 @@
             color: var(--cor-branco);
             text-align: center;
             padding: 10px;
-            position: absolute;
-            width: 100%;
-            bottom: 0;
         }
     </style>
 </head>
@@ -151,8 +150,8 @@
         <!-- Informações -->
         <div class="info-card">
             <h3>Selecione a Imagem do QR Code</h3>
-            <label for="qrcodeImage">Imagem:</label>
             <input type="file" id="qrcodeImage" accept="image/*" onchange="readQRCode()">
+            <p id="errorMessage" style="color: red; display: none;">Por favor, selecione uma imagem válida de QR Code.</p>
         </div>
 
         <!-- Texto do QR Code -->
@@ -167,10 +166,13 @@
             <svg id="barcode"></svg>
         </div>
 
-        <!-- Gráfico (opcional) -->
-        <div class="graph">
-            <p>Área para gráficos (exemplo de gráfico aqui)</p>
+        <!-- Botão de Copiar Texto do QR Code -->
+        <div class="info-card">
+            <button id="copyButton" onclick="copyQRCodeText()">Copiar Texto do QR Code</button>
         </div>
+
+        <!-- Feedback de Carregamento -->
+        <div class="loading" id="loadingMessage">Processando a imagem...</div>
 
     </div>
 
@@ -183,11 +185,18 @@
         function readQRCode() {
             const fileInput = document.getElementById('qrcodeImage');
             const file = fileInput.files[0];
+            const loadingMessage = document.getElementById('loadingMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const qrText = document.getElementById('qrText');
+            const barcodeContainer = document.getElementById('barcode');
+
             if (!file) {
-                alert("Por favor, selecione uma imagem.");
+                errorMessage.style.display = 'block';
                 return;
             }
-            
+            errorMessage.style.display = 'none';
+            loadingMessage.style.display = 'block';
+
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
@@ -200,12 +209,13 @@
                     
                     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
                     const qrCode = jsQR(imageData.data, canvas.width, canvas.height);
-                    
+
+                    loadingMessage.style.display = 'none';
                     if (qrCode) {
-                        document.getElementById('qrText').innerText = qrCode.data;
+                        qrText.innerText = qrCode.data;
                         generateBarcode(qrCode.data);
                     } else {
-                        alert("Não foi possível ler o QR Code.");
+                        qrText.innerText = 'Não foi possível ler o QR Code.';
                     }
                 };
                 img.src = e.target.result;
@@ -217,12 +227,27 @@
             const barcodeContainer = document.getElementById('barcode');
             JsBarcode(barcodeContainer, text, {
                 format: "CODE128",
-                lineColor: "#000",  /* Código de barras agora é preto */
+                lineColor: "#000",
                 width: 2,
                 height: 100,
                 displayValue: true
             });
         }
+
+        function copyQRCodeText() {
+            const qrText = document.getElementById('qrText').innerText;
+            if (qrText === 'Nenhum QR Code lido ainda.') {
+                alert("Nenhum texto de QR Code disponível para copiar.");
+                return;
+            }
+
+            navigator.clipboard.writeText(qrText).then(function() {
+                alert("Texto do QR Code copiado para a área de transferência!");
+            }).catch(function(error) {
+                alert("Falha ao copiar o texto: " + error);
+            });
+        }
     </script>
+
 </body>
 </html>
